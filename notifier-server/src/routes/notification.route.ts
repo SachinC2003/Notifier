@@ -8,7 +8,7 @@ import { validateCreateNotification } from "../middlewares/validate-notification
 
 const notificationRouter = Router();
 notificationRouter.use(authenticateApiKey);
-notificationRouter.post("/", validateCreateNotification, sendNotificationController);
+notificationRouter.post("/", authenticateApiKey, validateCreateNotification, sendNotificationController);
 notificationRouter.get("/", listNotificationsController);
 notificationRouter.get("/:notificationId", getNotificationController);
 notificationRouter.get("/:notificationId/status", getNotificationStatusController);

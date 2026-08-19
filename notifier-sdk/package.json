@@ -1,0 +1,21 @@
+{
+  "name": "notifier-sdk",
+  "version": "1.0.0",
+  "description": "SDK package client for Notifier systems",
+  "main": "./dist/notifier.js",
+  "module": "./dist/notifier.mjs",
+  "types": "./dist/notifier.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "axios": "^1.19.0"
+  }
+}
