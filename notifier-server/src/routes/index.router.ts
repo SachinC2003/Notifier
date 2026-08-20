@@ -7,6 +7,7 @@ const router = Router();
 
 router.use("/auth", authRouter);
 router.use("/events", eventRouter);
+router.use("/api/notifications", notificationRouter);
 router.use("/notifications", notificationRouter);
 
 export default router;

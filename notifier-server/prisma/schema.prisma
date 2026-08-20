@@ -47,6 +47,7 @@ model Event {
   eventKey    String
   name        String
   description String?
+  channel     String   @default("SMS")
 
   subject     String
   body        String

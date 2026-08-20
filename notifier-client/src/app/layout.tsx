@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Notifier | Notification infrastructure",
-  description: "Monitor and manage your notification infrastructure.",
+  title: "Notifier",
+  description: "Notification infrastructure for developers.",
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

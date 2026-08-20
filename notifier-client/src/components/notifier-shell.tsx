@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   BookOpen,
@@ -12,7 +12,9 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { authApi } from "@/lib/api/auth";
+import type { User } from "@/lib/api/types";
 
 const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -24,7 +26,35 @@ const nav = [
 
 export function NotifierShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Browser session storage is intentionally read after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUser(authApi.getUser());
+
+    const handleSessionExpired = () => router.replace("/login");
+    window.addEventListener("notifier:session-expired", handleSessionExpired);
+
+    const token = sessionStorage.getItem("notifier.accessToken");
+    if (!token) {
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    }
+
+    return () =>
+      window.removeEventListener(
+        "notifier:session-expired",
+        handleSessionExpired,
+      );
+  }, [pathname, router]);
+
+  const handleLogout = () => {
+    authApi.logout();
+    router.push("/");
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <aside
@@ -80,15 +110,24 @@ export function NotifierShell({ children }: { children: React.ReactNode }) {
           <div className="border-t pt-4">
             <div className="flex items-center gap-3 px-2">
               <div className="flex size-8 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
-                A
+                {user?.name?.slice(0, 1).toUpperCase() ?? "U"}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">Ansh Sharma</p>
+                <p className="truncate text-sm font-medium">
+                  {user?.name ?? "Loading user"}
+                </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  ansh@example.com
+                  {user?.email ?? ""}
                 </p>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="mt-3 w-full rounded-md border px-3 py-2 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              Log out
+            </button>
           </div>
         </div>
       </aside>

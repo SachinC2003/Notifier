@@ -16,11 +16,12 @@ export const validateEventId = (req: Request<{ eventId: string }>, _res: Respons
 
 export const validateCreateEvent = (req: Request<unknown, unknown, CreateEventInput>, _res: Response, next: NextFunction) => {
   try {
-    const { eventKey, name, subject, body, description } = req.body ?? {};
+    const { eventKey, name, subject, body, description, channel } = req.body ?? {};
     const normalizedKey = requiredText(eventKey, "eventKey", 100);
     if (!eventKeyPattern.test(normalizedKey)) throw new AppError("eventKey has an invalid format", 400);
     if (description !== undefined && (typeof description !== "string" || description.trim().length > 1_000)) throw new AppError("description must be text up to 1000 characters", 400);
-    req.body = { eventKey: normalizedKey, name: requiredText(name, "name", 100), subject: requiredText(subject, "subject", 255), body: requiredText(body, "body", 50_000), ...(description === undefined ? {} : { description: description.trim() }) };
+    if (channel !== "EMAIL" && channel !== "SMS") throw new AppError("channel must be EMAIL or SMS", 400);
+    req.body = { eventKey: normalizedKey, name: requiredText(name, "name", 100), subject: channel === "SMS" ? (typeof subject === "string" ? subject.trim() : "") : requiredText(subject, "subject", 255), body: requiredText(body, "body", 50_000), channel, ...(description === undefined ? {} : { description: description.trim() }) };
     return next();
   } catch (error) { return next(error); }
 };
@@ -28,7 +29,7 @@ export const validateCreateEvent = (req: Request<unknown, unknown, CreateEventIn
 export const validateUpdateEvent = (req: Request<unknown, unknown, UpdateEventInput>, _res: Response, next: NextFunction) => {
   try {
     const input = req.body ?? {};
-    const allowedKeys = ["eventKey", "name", "subject", "body", "description", "isActive"];
+    const allowedKeys = ["eventKey", "name", "subject", "body", "description", "channel", "isActive"];
     const keys = Object.keys(input);
     if (keys.length === 0 || keys.some((key) => !allowedKeys.includes(key))) throw new AppError("Provide one or more valid event fields to update", 400);
     const update: UpdateEventInput = {};
@@ -36,6 +37,7 @@ export const validateUpdateEvent = (req: Request<unknown, unknown, UpdateEventIn
     if (input.name !== undefined) update.name = requiredText(input.name, "name", 100);
     if (input.subject !== undefined) update.subject = requiredText(input.subject, "subject", 255);
     if (input.body !== undefined) update.body = requiredText(input.body, "body", 50_000);
+    if (input.channel !== undefined) { if (input.channel !== "EMAIL" && input.channel !== "SMS") throw new AppError("channel must be EMAIL or SMS", 400); update.channel = input.channel; }
     if (input.description !== undefined) { if (input.description !== null && (typeof input.description !== "string" || input.description.trim().length > 1_000)) throw new AppError("description must be text up to 1000 characters or null", 400); update.description = input.description === null ? null : input.description.trim(); }
     if (input.isActive !== undefined) { if (typeof input.isActive !== "boolean") throw new AppError("isActive must be a boolean", 400); update.isActive = input.isActive; }
     req.body = update;

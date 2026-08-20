@@ -1,5 +1,5 @@
-import type { SdkConfig, CreateNotificationInput, ApiResponse } from "./types";
 import axios from "axios";
+import type { SdkConfig, CreateNotificationInput, ApiResponse } from "./types";
 
 export class NotificationModule {
   private baseUrl: string;
@@ -13,20 +13,19 @@ export class NotificationModule {
    */
   async send(input: CreateNotificationInput): Promise<ApiResponse> {
     try {
-      const response = await axios.post(`${this.baseUrl}/notifications`, input, {
+      // 🌟 FIXED: Appended '/api' routing namespace prefix to match backend paths
+      const response = await axios.post(`${this.baseUrl}/api/notifications`, input, {
         headers: {
           "Content-Type": "application/json",
           "X-API-KEY": this.config.apiKey,
         }
       });
 
-      const body = await response.data as ApiResponse;
-      if (body.success === false) {
-        throw new Error(`[Notifier SDK - Notification Error]: ${body.message}`);
-      }
-      return body;
+      return response.data as ApiResponse;
     } catch (error: any) {
-      throw new Error(`[Notifier SDK - Notification Error]: ${error.message}`);
+      // 🌟 FIXED: Extracts the exact error string returned by your Express API server
+      const serverErrorMessage = error.response?.data?.message || error.message;
+      throw new Error(`[Notifier SDK - Notification Error]: ${serverErrorMessage}`);
     }
   }
 }

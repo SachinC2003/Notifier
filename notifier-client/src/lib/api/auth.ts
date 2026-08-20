@@ -1,15 +1,48 @@
 import { request } from "./client";
 import type { AuthResponse } from "./types";
 
+const saveSession = (auth: AuthResponse) => {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem("notifier.accessToken", auth.accessToken);
+  sessionStorage.setItem("notifier.user", JSON.stringify(auth.user));
+};
+
 export const authApi = {
-  register: (input: { name: string; email: string; password: string }) =>
-    request<AuthResponse>("/auth/register", {
+  register: async (input: {
+    name: string;
+    email: string;
+    password: string;
+  }) => {
+    const auth = await request<AuthResponse>("/auth/register", {
       method: "POST",
       body: JSON.stringify(input),
-    }),
-  login: (input: { email: string; password: string }) =>
-    request<AuthResponse>("/auth/login", {
+    });
+    saveSession(auth);
+    return auth;
+  },
+  login: async (input: { email: string; password: string }) => {
+    const auth = await request<AuthResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify(input),
-    }),
+    });
+    saveSession(auth);
+    return auth;
+  },
+  logout: () => {
+    if (typeof window === "undefined") return;
+    sessionStorage.removeItem("notifier.accessToken");
+    sessionStorage.removeItem("notifier.user");
+    sessionStorage.removeItem("notifier.apiKey");
+  },
+  changePassword: (input: { currentPassword: string; newPassword: string }) =>
+    request<void>(
+      "/auth/password",
+      { method: "PATCH", body: JSON.stringify(input) },
+      "jwt",
+    ),
+  getUser: () => {
+    if (typeof window === "undefined") return null;
+    const value = sessionStorage.getItem("notifier.user");
+    return value ? (JSON.parse(value) as AuthResponse["user"]) : null;
+  },
 };

@@ -1,13 +1,8 @@
 import { request } from "./client";
-import type { Notification } from "./types";
+import type { CreateNotificationInput, Notification } from "./types";
 
 export const notificationsApi = {
-  send: (input: {
-    eventKey: string;
-    recipient: string;
-    channel: string[];
-    data: Record<string, unknown>;
-  }) =>
+  send: (input: CreateNotificationInput) =>
     request<Notification>(
       "/notifications",
       {

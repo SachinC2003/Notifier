@@ -9,6 +9,7 @@ const eventSelect = {
   eventKey: true,
   name: true,
   description: true,
+  channel: true,
   subject: true,
   body: true,
   isActive: true,

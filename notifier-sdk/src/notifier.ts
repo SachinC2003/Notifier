@@ -17,3 +17,5 @@ export class Notifier {
     this.notifications = new NotificationModule(config);
   }
 }
+
+export * from "./types";

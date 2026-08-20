@@ -1,22 +1,16 @@
 import { request } from "./client";
-import type { Event } from "./types";
+import type { CreateEventInput, Event, UpdateEventInput } from "./types";
 
 export const eventsApi = {
   list: () => request<Event[]>("/events", {}, "jwt"),
   get: (id: string) => request<Event>(`/events/${id}`, {}, "jwt"),
-  create: (input: {
-    eventKey: string;
-    name: string;
-    description?: string;
-    subject: string;
-    body: string;
-  }) =>
+  create: (input: CreateEventInput) =>
     request<Event>(
       "/events",
       { method: "POST", body: JSON.stringify(input) },
       "jwt",
     ),
-  update: (id: string, input: Partial<Event>) =>
+  update: (id: string, input: UpdateEventInput) =>
     request<Event>(
       `/events/${id}`,
       { method: "PATCH", body: JSON.stringify(input) },
