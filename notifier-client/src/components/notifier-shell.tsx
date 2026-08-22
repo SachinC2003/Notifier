@@ -164,6 +164,27 @@ export function NotifierShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">{children}</main>
+        <footer className="mx-auto mt-8 max-w-7xl border-t px-5 py-7 text-xs text-muted-foreground lg:px-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              <span className="font-semibold text-foreground">Notifier</span>{" "}
+              helps teams deliver dependable customer messages.
+            </p>
+            <div className="flex gap-4">
+              <Link href="/docs" className="hover:text-foreground">
+                Documentation
+              </Link>
+              <Link href="/settings" className="hover:text-foreground">
+                Account settings
+              </Link>
+              <span>API status: operational</span>
+            </div>
+          </div>
+          <p className="mt-3">
+            Keep your API keys private. Delivery activity and logs are retained
+            for your workspace visibility.
+          </p>
+        </footer>
       </div>
     </div>
   );

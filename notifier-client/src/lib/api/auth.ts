@@ -3,8 +3,16 @@ import type { AuthResponse } from "./types";
 
 const saveSession = (auth: AuthResponse) => {
   if (typeof window === "undefined") return;
+  const previousUser = sessionStorage.getItem("notifier.user");
+  const previousUserId = previousUser
+    ? (JSON.parse(previousUser) as AuthResponse["user"]).id
+    : null;
+  if (previousUserId !== auth.user.id)
+    sessionStorage.removeItem("notifier.apiKey");
   sessionStorage.setItem("notifier.accessToken", auth.accessToken);
   sessionStorage.setItem("notifier.user", JSON.stringify(auth.user));
+  if (auth.apiKey.apiKey)
+    sessionStorage.setItem("notifier.apiKey", auth.apiKey.apiKey);
 };
 
 export const authApi = {

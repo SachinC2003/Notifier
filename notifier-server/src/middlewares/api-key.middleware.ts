@@ -17,7 +17,11 @@ declare global {
 }
 
 /** Authenticates customer applications through the X-API-Key header. */
-export const authenticateApiKey = async (req: Request, _res: Response, next: NextFunction) => {
+export const authenticateApiKey = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+) => {
   const rawApiKey = req.header("x-api-key");
 
   if (!rawApiKey) {
@@ -41,7 +45,7 @@ export const authenticateApiKey = async (req: Request, _res: Response, next: Nex
       },
     });
 
-    const isValid = apiKey && await verifyPassword(rawApiKey, apiKey.keyHash);
+    const isValid = apiKey && (await verifyPassword(rawApiKey, apiKey.keyHash));
 
     if (!isValid || !apiKey.isActive || apiKey.user.status !== "ACTIVE") {
       return next(new AppError("Invalid API key", 401));

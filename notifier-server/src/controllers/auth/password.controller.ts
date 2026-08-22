@@ -18,10 +18,13 @@ export const changePasswordController = async (
       typeof newPassword !== "string" ||
       currentPassword.length === 0 ||
       newPassword.length < 8 ||
-      newPassword.length > 128
+      newPassword.length > 128 ||
+      !/[A-Z]/.test(newPassword) ||
+      !/[^A-Za-z0-9]/.test(newPassword)
     ) {
       return res.status(400).json({
-        message: "Passwords must be present and the new password must be 8 to 128 characters",
+        message:
+          "Passwords must be present and the new password must be 8 to 128 characters with one uppercase letter and one special character",
       });
     }
 

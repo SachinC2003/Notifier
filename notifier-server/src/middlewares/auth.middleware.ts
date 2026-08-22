@@ -4,7 +4,10 @@ import { AppError } from "../errors/app-error";
 import { requireJwtSecret } from "../utils/token.util";
 import { assertActiveUser } from "../bll/auth-bll/auth-user.bll";
 
-export interface AuthenticatedUser { userId: string; email?: string; }
+export interface AuthenticatedUser {
+  userId: string;
+  email?: string;
+}
 type AccessTokenPayload = JwtPayload & { email?: string };
 declare global {
   namespace Express {
@@ -15,9 +18,14 @@ declare global {
   }
 }
 
-export const authenticate = async (req: Request, _res: Response, next: NextFunction) => {
+export const authenticate = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+) => {
   const authorization = req.header("authorization");
-  if (!authorization?.startsWith("Bearer ")) return next(new AppError("Authentication token is required", 401));
+  if (!authorization?.startsWith("Bearer "))
+    return next(new AppError("Authentication token is required", 401));
   try {
     const payload = jwt.verify(authorization.slice(7), requireJwtSecret());
     if (typeof payload === "string") {

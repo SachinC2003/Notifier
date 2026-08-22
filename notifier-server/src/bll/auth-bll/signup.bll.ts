@@ -4,6 +4,7 @@ import type { AuthResponse, SignUpInput } from "../../dtos/user.dto";
 import { AppError } from "../../errors/app-error";
 import { hashPassword } from "../../utils/password.util";
 import { createAccessToken } from "../../utils/token.util";
+import { createApiKey } from "./api-key.bll";
 
 const publicUserSelect = {
   id: true,
@@ -40,7 +41,8 @@ export const signUp = async (input: SignUpInput): Promise<AuthResponse> => {
       select: publicUserSelect,
     });
 
-    return { user, accessToken: createAccessToken(user) };
+    const apiKey = await createApiKey(user.id, { name: "Default API key" });
+    return { user, accessToken: createAccessToken(user), apiKey };
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

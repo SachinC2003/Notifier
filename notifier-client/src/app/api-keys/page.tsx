@@ -3,6 +3,7 @@
 import { Check, Copy, KeyRound, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/api/client";
+import { toast, useFeedback } from "@/components/feedback-provider";
 import { apiKeysApi } from "@/lib/api/api-keys";
 import type { ApiKey } from "@/lib/api/types";
 import { NotifierShell, PageHeader } from "@/components/notifier-shell";
@@ -15,23 +16,43 @@ export default function ApiKeysPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const { confirm } = useFeedback();
 
   const loadLatestKey = async () => {
     try {
       const keys = await apiKeysApi.list();
       setLatestKey(keys[0] ?? null);
+      const storedKey = sessionStorage.getItem("notifier.apiKey");
+      if (storedKey && keys[0])
+        setGeneratedKey({ ...keys[0], apiKey: storedKey });
     } catch (error) {
-      setMessage(error instanceof ApiError ? error.message : "Unable to load the active API key.");
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : "Unable to load the active API key.",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   // The active key is loaded from the backend after the page mounts.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { void loadLatestKey(); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadLatestKey();
+  }, []);
 
   const createKey = async () => {
+    if (latestKey) {
+      const confirmed = await confirm({
+        title: "Replace active API key?",
+        description:
+          "Generating a new key permanently revokes the previous key. Update every application using it before you continue, then copy the new key because it will only be shown once.",
+        confirmLabel: "Generate replacement",
+        destructive: true,
+      });
+      if (!confirmed) return;
+    }
     setIsCreating(true);
     setMessage(null);
     setCopied(false);
@@ -40,16 +61,23 @@ export default function ApiKeysPage() {
       setLatestKey(key);
       setGeneratedKey(key);
       if (key.apiKey) sessionStorage.setItem("notifier.apiKey", key.apiKey);
+      toast.success("API key generated");
     } catch (error) {
-      setMessage(error instanceof ApiError ? error.message : "Unable to generate the API key.");
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : "Unable to generate the API key.",
+      );
     } finally {
       setIsCreating(false);
     }
   };
 
   const copyKey = async () => {
-    if (!generatedKey?.apiKey) return;
-    await navigator.clipboard.writeText(generatedKey.apiKey);
+    const apiKey =
+      generatedKey?.apiKey ?? sessionStorage.getItem("notifier.apiKey");
+    if (!apiKey) return;
+    await navigator.clipboard.writeText(apiKey);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1500);
   };
@@ -61,30 +89,81 @@ export default function ApiKeysPage() {
       <PageHeader
         title="API keys"
         description="Use API keys to authenticate requests from your application."
-        action={<button onClick={() => void createKey()} disabled={isCreating} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60"><Plus size={16} />{isCreating ? "Generating..." : "Create API key"}</button>}
+        action={
+          <button
+            onClick={() => void createKey()}
+            disabled={isCreating}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+          >
+            <Plus size={16} />
+            {isCreating ? "Generating..." : "Create API key"}
+          </button>
+        }
       />
-      {message && <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p>}
+      {message && (
+        <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {message}
+        </p>
+      )}
       {isLoading ? (
-        <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-muted-foreground">Loading active API key...</div>
+        <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-muted-foreground">
+          Loading active API key...
+        </div>
       ) : visibleKey ? (
         <section className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-950">
           <p className="font-semibold">Latest active API key</p>
-          <p className="mt-1 text-sm">The full key is shown only immediately after generation. Older keys are not displayed.</p>
+          <p className="mt-1 text-sm">
+            Keep this key private. It remains available in this browser so you
+            can copy it again.
+          </p>
           <div className="mt-4 flex items-center gap-2 rounded-md border border-amber-300 bg-white p-3">
-            <code className="min-w-0 flex-1 break-all text-sm">{generatedKey?.apiKey ?? `${visibleKey}••••••••`}</code>
-            <button onClick={() => void copyKey()} disabled={!generatedKey?.apiKey} aria-label="Copy API key" className="rounded-md p-2 hover:bg-amber-100 disabled:opacity-40">{copied ? <Check size={16} /> : <Copy size={16} />}</button>
+            <code className="min-w-0 flex-1 break-all text-sm">
+              {generatedKey?.apiKey ?? `${visibleKey}••••••••`}
+            </code>
+            <button
+              onClick={() => void copyKey()}
+              disabled={
+                !generatedKey?.apiKey &&
+                typeof window !== "undefined" &&
+                !sessionStorage.getItem("notifier.apiKey")
+              }
+              aria-label="Copy API key"
+              className="rounded-md p-2 hover:bg-amber-100 disabled:opacity-40"
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+            </button>
           </div>
         </section>
       ) : null}
       <section className="mb-6 rounded-lg border bg-card p-5">
         <h2 className="font-semibold">Generate replacement key</h2>
-        <p className="mt-1 text-xs text-muted-foreground">Generating a new key revokes the previously active key.</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Generating a new key revokes the previously active key.
+        </p>
         <div className="mt-4 flex max-w-md items-end gap-3">
-          <label className="grid flex-1 gap-2 text-sm font-medium">Key name<input value={name} onChange={(event) => setName(event.target.value)} maxLength={100} className="h-10 rounded-md border bg-background px-3 font-normal" /></label>
-          <button onClick={() => void createKey()} disabled={isCreating || !name.trim()} className="h-10 rounded-md border px-3 text-sm font-medium hover:bg-muted disabled:opacity-50">Generate</button>
+          <label className="grid flex-1 gap-2 text-sm font-medium">
+            Key name
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={100}
+              className="h-10 rounded-md border bg-background px-3 font-normal"
+            />
+          </label>
+          <button
+            onClick={() => void createKey()}
+            disabled={isCreating || !name.trim()}
+            className="h-10 rounded-md border px-3 text-sm font-medium hover:bg-muted disabled:opacity-50"
+          >
+            Generate
+          </button>
         </div>
       </section>
-      <div className="rounded-lg border bg-card px-5 py-4 text-sm text-muted-foreground"><KeyRound className="mr-2 inline-block" size={17} />Only the latest active key is shown. Revoked keys remain stored by the backend and are never usable.</div>
+      <div className="rounded-lg border bg-card px-5 py-4 text-sm text-muted-foreground">
+        <KeyRound className="mr-2 inline-block" size={17} />
+        Only the latest active key is shown. Generating a replacement
+        permanently removes the previous key.
+      </div>
     </NotifierShell>
   );
 }

@@ -20,4 +20,15 @@ export type PublicUser = {
 export type AuthResponse = {
   user: PublicUser;
   accessToken: string;
+  apiKey: AuthApiKey;
+};
+
+export type AuthApiKey = {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  isActive: boolean;
+  lastUsedAt: Date | null;
+  createdAt: Date;
+  apiKey?: string;
 };

@@ -1,5 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
-import { createApiKey, listApiKeys, revokeApiKey } from "../../bll/auth-bll/api-key.bll";
+import {
+  createApiKey,
+  listApiKeys,
+  revokeApiKey,
+} from "../../bll/auth-bll/api-key.bll";
 import type { CreateApiKeyInput } from "../../dtos/notifier.dto";
 
 export const createApiKeyController = async (
@@ -15,7 +19,11 @@ export const createApiKeyController = async (
   }
 };
 
-export const listApiKeysController = async (req: Request, res: Response, next: NextFunction) => {
+export const listApiKeysController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     return res.json({ data: await listApiKeys(req.userId!) });
   } catch (error) {
@@ -23,7 +31,11 @@ export const listApiKeysController = async (req: Request, res: Response, next: N
   }
 };
 
-export const revokeApiKeyController = async (req: Request<{ apiKeyId: string }>, res: Response, next: NextFunction) => {
+export const revokeApiKeyController = async (
+  req: Request<{ apiKeyId: string }>,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     await revokeApiKey(req.userId!, req.params.apiKeyId);
     return res.status(204).send();
@@ -31,4 +43,3 @@ export const revokeApiKeyController = async (req: Request<{ apiKeyId: string }>,
     return next(error);
   }
 };
-

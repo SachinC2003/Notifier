@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ApiError } from "@/lib/api/client";
+import { toast } from "@/components/feedback-provider";
 import { authApi } from "@/lib/api/auth";
 
 export default function SignupPage() {
@@ -21,6 +23,18 @@ export default function SignupPage() {
     setForm((current) => ({ ...current, [field]: value }));
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null);
+    if (
+      form.password.length < 8 ||
+      form.password.length > 128 ||
+      !/[A-Z]/.test(form.password) ||
+      !/[^A-Za-z0-9]/.test(form.password)
+    ) {
+      setError(
+        "Password must be 8 to 128 characters and include one uppercase letter and one special character.",
+      );
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -33,13 +47,15 @@ export default function SignupPage() {
         email: form.email,
         password: form.password,
       });
+      toast.success("Account created");
       router.replace("/dashboard");
     } catch (submitError) {
-      setError(
+      const message =
         submitError instanceof ApiError
           ? submitError.message
-          : "Unable to create your account.",
-      );
+          : "Unable to create your account.";
+      setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -72,6 +88,10 @@ export default function SignupPage() {
           onChange={(value) => update("password", value)}
           placeholder="At least 8 characters"
         />
+        <p className="-mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+          <ShieldCheck size={14} className="text-primary" /> 8+ characters, one
+          uppercase letter, one special character
+        </p>
         <Field
           label="Confirm password"
           type="password"
@@ -117,17 +137,30 @@ function Field({
   onChange: (value: string) => void;
   placeholder: string;
 }) {
+  const [visible, setVisible] = useState(false);
   return (
     <label className="grid gap-2 text-sm font-medium">
       {label}
-      <input
-        required
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="h-10 rounded-md border bg-background px-3 font-normal outline-none ring-primary focus:ring-2"
-      />
+      <span className="relative">
+        <input
+          required
+          type={type === "password" && !visible ? "password" : "text"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className="h-11 w-full rounded-md border bg-background px-3 pr-11 font-normal outline-none ring-primary focus:ring-2"
+        />
+        {type === "password" && (
+          <button
+            type="button"
+            onClick={() => setVisible((current) => !current)}
+            aria-label={visible ? "Hide password" : "Show password"}
+            className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-foreground"
+          >
+            {visible ? <EyeOff size={17} /> : <Eye size={17} />}
+          </button>
+        )}
+      </span>
     </label>
   );
 }
@@ -142,8 +175,8 @@ function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-5 py-10">
-      <div className="w-full max-w-md rounded-lg border bg-card p-7">
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,var(--accent),transparent_40%),linear-gradient(135deg,var(--background),var(--muted))] px-5 py-10">
+      <div className="w-full max-w-md rounded-xl border bg-card/95 p-7 shadow-xl shadow-black/5 backdrop-blur sm:p-9">
         <div className="mb-8">
           <Link href="/login" className="font-semibold tracking-tight">
             Notifier

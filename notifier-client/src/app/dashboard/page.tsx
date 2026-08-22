@@ -43,7 +43,8 @@ export default function DashboardPage() {
       .then((items) => {
         setNotifications(
           [...items].sort(
-            (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
+            (left, right) =>
+              Date.parse(right.createdAt) - Date.parse(left.createdAt),
           ),
         );
       })
@@ -68,15 +69,16 @@ export default function DashboardPage() {
       notification.status === "QUEUED" || notification.status === "PROCESSING",
   ).length;
 
-
-  const handleSendTestSms = async () => {
+  const handleSendTestWhatsApp = async () => {
     setIsSending(true);
     setSendMessage(null);
 
     try {
       const apiKey = sessionStorage.getItem("notifier.apiKey");
       if (!apiKey) {
-        throw new Error("Create an API key before sending a test SMS.");
+        throw new Error(
+          "Create an API key before sending a test WhatsApp message.",
+        );
       }
 
       const notifier = new Notifier({
@@ -86,8 +88,8 @@ export default function DashboardPage() {
       });
 
       const result = await notifier.notifications.send({
-        eventKey: "ORDER_PLACED",
-        channel: ["SMS"],
+        eventKey: "ORDER_SHIPPED",
+        channel: ["WHATSAPP", "SMS"],
         recipient: "+919309177650",
         data: {
           customerName: "Sachin",
@@ -96,10 +98,14 @@ export default function DashboardPage() {
         },
       });
 
-      setSendMessage(result.message || "Test SMS accepted for delivery.");
+      setSendMessage(
+        result.message || "Test WhatsApp message accepted for delivery.",
+      );
     } catch (error) {
       setSendMessage(
-        error instanceof Error ? error.message : "Unable to send the test SMS.",
+        error instanceof Error
+          ? error.message
+          : "Unable to send the test WhatsApp message.",
       );
     } finally {
       setIsSending(false);
@@ -182,10 +188,13 @@ export default function DashboardPage() {
             </p>
           )}
           {isLoadingNotifications ? (
-            <div className="space-y-3 p-5"><div className="h-12 animate-pulse rounded-md bg-muted" /><div className="h-12 animate-pulse rounded-md bg-muted" /></div>
+            <div className="space-y-3 p-5">
+              <div className="h-12 animate-pulse rounded-md bg-muted" />
+              <div className="h-12 animate-pulse rounded-md bg-muted" />
+            </div>
           ) : notifications.length > 0 ? (
             <div className="overflow-x-auto">
-                  <table className="w-full min-w-155 text-left text-sm">
+              <table className="w-full min-w-155 text-left text-sm">
                 <thead className="border-b bg-muted/30 text-xs text-muted-foreground">
                   <tr>
                     <th className="px-5 py-3 font-medium">Event</th>
@@ -215,7 +224,9 @@ export default function DashboardPage() {
                       <td className="px-5 py-3 text-xs">
                         {notification.status}
                       </td>
-                      <td className="px-5 py-3 text-xs text-muted-foreground">{new Date(notification.createdAt).toLocaleString()}</td>
+                      <td className="px-5 py-3 text-xs text-muted-foreground">
+                        {new Date(notification.createdAt).toLocaleString()}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -248,13 +259,13 @@ export default function DashboardPage() {
           <div className="mt-5 space-y-2">
             <button
               type="button"
-              onClick={() => void handleSendTestSms()}
+              onClick={() => void handleSendTestWhatsApp()}
               disabled={isSending}
               className="flex w-full items-center gap-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-left text-sm hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Send size={17} className="text-primary" />
               <span className="flex-1">
-                {isSending ? "Sending test SMS..." : "Send test SMS"}
+                {isSending ? "Sending test WhatsApp..." : "Send test WhatsApp"}
               </span>
             </button>
             {sendMessage && (

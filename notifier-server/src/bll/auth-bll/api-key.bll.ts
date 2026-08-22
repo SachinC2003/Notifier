@@ -3,9 +3,13 @@ import { prisma } from "../../config/db";
 import type { CreateApiKeyInput } from "../../dtos/notifier.dto";
 import { AppError } from "../../errors/app-error";
 import { hashPassword } from "../../utils/password.util";
+import { encryptApiKey } from "../../utils/api-key-crypto.util";
 import { assertActiveUser } from "./auth-user.bll";
 
-export const createApiKey = async (userId: string, input: CreateApiKeyInput) => {
+export const createApiKey = async (
+  userId: string,
+  input: CreateApiKeyInput,
+) => {
   await assertActiveUser(userId);
 
   const name = input.name?.trim() || "Default API key";
@@ -19,13 +23,16 @@ export const createApiKey = async (userId: string, input: CreateApiKeyInput) => 
   const keyHash = await hashPassword(rawApiKey);
 
   const apiKey = await prisma.$transaction(async (transaction) => {
-    await transaction.apiKey.updateMany({
-      where: { userId, isActive: true },
-      data: { isActive: false },
-    });
+    await transaction.apiKey.deleteMany({ where: { userId } });
 
     return transaction.apiKey.create({
-      data: { userId, name, keyPrefix, keyHash },
+      data: {
+        userId,
+        name,
+        keyPrefix,
+        keyHash,
+        encryptedKey: encryptApiKey(rawApiKey),
+      },
       select: {
         id: true,
         name: true,

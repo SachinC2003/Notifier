@@ -1,0 +1,8 @@
+ALTER TABLE "events" ALTER COLUMN "channel" DROP DEFAULT;
+
+ALTER TABLE "events"
+  ALTER COLUMN "channel" TYPE TEXT[]
+  USING ARRAY["channel"];
+
+ALTER TABLE "events"
+  ALTER COLUMN "channel" SET DEFAULT ARRAY['SMS']::TEXT[];

@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ApiError } from "@/lib/api/client";
+import { toast } from "@/components/feedback-provider";
 import { authApi } from "@/lib/api/auth";
 
 export default function LoginPage() {
@@ -20,14 +22,16 @@ export default function LoginPage() {
 
     try {
       await authApi.login({ email, password });
+      toast.success("Welcome back");
       const next = new URLSearchParams(window.location.search).get("next");
       router.replace(next || "/dashboard");
     } catch (submitError) {
-      setError(
+      const message =
         submitError instanceof ApiError
           ? submitError.message
-          : "Unable to sign in.",
-      );
+          : "Unable to sign in.";
+      setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -91,17 +95,30 @@ function Field({
   onChange: (value: string) => void;
   placeholder: string;
 }) {
+  const [visible, setVisible] = useState(false);
   return (
     <label className="grid gap-2 text-sm font-medium">
       {label}
-      <input
-        required
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="h-10 rounded-md border bg-background px-3 font-normal outline-none ring-primary focus:ring-2"
-      />
+      <span className="relative">
+        <input
+          required
+          type={type === "password" && !visible ? "password" : "text"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className="h-11 w-full rounded-md border bg-background px-3 pr-11 font-normal outline-none ring-primary focus:ring-2"
+        />
+        {type === "password" && (
+          <button
+            type="button"
+            onClick={() => setVisible((current) => !current)}
+            aria-label={visible ? "Hide password" : "Show password"}
+            className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-foreground"
+          >
+            {visible ? <EyeOff size={17} /> : <Eye size={17} />}
+          </button>
+        )}
+      </span>
     </label>
   );
 }
@@ -116,8 +133,8 @@ function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-5 py-10">
-      <div className="w-full max-w-md rounded-lg border bg-card p-7">
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,var(--accent),transparent_40%),linear-gradient(135deg,var(--background),var(--muted))] px-5 py-10">
+      <div className="w-full max-w-md rounded-xl border bg-card/95 p-7 shadow-xl shadow-black/5 backdrop-blur sm:p-9">
         <div className="mb-8">
           <Link href="/login" className="font-semibold tracking-tight">
             Notifier

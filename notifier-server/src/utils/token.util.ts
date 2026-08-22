@@ -12,8 +12,6 @@ export const requireJwtSecret = (): string => {
 };
 
 export const createAccessToken = (user: PublicUser): string =>
-  jwt.sign(
-    { sub: user.id, email: user.email },
-    requireJwtSecret(),
-    { expiresIn: "1h" },
-  );
+  jwt.sign({ sub: user.id, email: user.email }, requireJwtSecret(), {
+    expiresIn: "1h",
+  });

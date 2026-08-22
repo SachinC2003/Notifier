@@ -11,7 +11,7 @@ export type Event = {
   eventKey: string;
   name: string;
   description: string | null;
-  channel: "EMAIL" | "SMS";
+  channel: ("EMAIL" | "SMS" | "WHATSAPP")[];
   subject: string;
   body: string;
   isActive: boolean;
@@ -25,7 +25,7 @@ export type CreateEventInput = {
   description?: string;
   subject: string;
   body: string;
-  channel: "EMAIL" | "SMS";
+  channel: ("EMAIL" | "SMS" | "WHATSAPP")[];
 };
 
 export type UpdateEventInput = Partial<CreateEventInput> & {
@@ -65,7 +65,11 @@ export type ApiKey = {
   apiKey?: string;
 };
 
-export type AuthResponse = { user: User; accessToken: string };
+export type AuthResponse = {
+  user: User;
+  accessToken: string;
+  apiKey: ApiKey & { apiKey: string };
+};
 
 export type CreateNotificationInput = {
   eventKey: string;

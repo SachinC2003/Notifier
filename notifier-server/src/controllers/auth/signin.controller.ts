@@ -10,7 +10,9 @@ const signin = async (
 ) => {
   try {
     const auth = await signIn(req.body);
-    return res.status(200).json({ message: "Signed in successfully", data: auth });
+    return res
+      .status(200)
+      .json({ message: "Signed in successfully", data: auth });
   } catch (error) {
     return next(error);
   }

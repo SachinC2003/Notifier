@@ -20,4 +20,8 @@ export const notificationsApi = {
         logs: Notification["logs"];
       }
     >(`/notifications/${id}/status`, {}, "api-key"),
+  remove: (id: string) =>
+    request<void>(`/notifications/${id}`, { method: "DELETE" }, "api-key"),
+  removeAll: () =>
+    request<void>("/notifications", { method: "DELETE" }, "api-key"),
 };

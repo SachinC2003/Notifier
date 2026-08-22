@@ -1,10 +1,16 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../config/db";
-import { NotificationType, type CreateNotificationInput } from "../../dtos/notifier.dto";
+import {
+  NotificationType,
+  type CreateNotificationInput,
+} from "../../dtos/notifier.dto";
 import { AppError } from "../../errors/app-error";
 import { assertActiveUser } from "../auth-bll/auth-user.bll";
-import { smsQueue } from "../../queue/notification.queue";
-
+import {
+  smsQueue,
+  emailQueue,
+  whatsappQueue,
+} from "../../queue/notification.queue";
 
 const notificationSelect = {
   id: true,
@@ -39,7 +45,11 @@ const notificationSelect = {
 
 const resolveValue = (data: Record<string, unknown>, path: string): unknown => {
   return path.split(".").reduce<unknown>((currentValue, key) => {
-    if (!currentValue || typeof currentValue !== "object" || Array.isArray(currentValue)) {
+    if (
+      !currentValue ||
+      typeof currentValue !== "object" ||
+      Array.isArray(currentValue)
+    ) {
       return undefined;
     }
 
@@ -48,18 +58,24 @@ const resolveValue = (data: Record<string, unknown>, path: string): unknown => {
 };
 
 const renderTemplate = (template: string, data: Record<string, unknown>) => {
-  return template.replace(/{{\s*([A-Za-z0-9_.]+)\s*}}/g, (_placeholder, variableName: string) => {
-    const value = resolveValue(data, variableName);
+  return template.replace(
+    /{{\s*([A-Za-z0-9_.]+)\s*}}/g,
+    (_placeholder, variableName: string) => {
+      const value = resolveValue(data, variableName);
 
-    if (value === undefined || value === null) {
-      throw new AppError(`Missing template variable: ${variableName}`, 400);
-    }
+      if (value === undefined || value === null) {
+        throw new AppError(`Missing template variable: ${variableName}`, 400);
+      }
 
-    return typeof value === "object" ? JSON.stringify(value) : String(value);
-  });
+      return typeof value === "object" ? JSON.stringify(value) : String(value);
+    },
+  );
 };
 
-const getOwnedNotificationOrThrow = async (userId: string, notificationId: string) => {
+const getOwnedNotificationOrThrow = async (
+  userId: string,
+  notificationId: string,
+) => {
   const notification = await prisma.notification.findFirst({
     where: {
       id: notificationId,
@@ -75,12 +91,11 @@ const getOwnedNotificationOrThrow = async (userId: string, notificationId: strin
   return notification;
 };
 
-export const sendNotification = async (userId: string, input: CreateNotificationInput) => {
+export const sendNotification = async (
+  userId: string,
+  input: CreateNotificationInput,
+) => {
   await assertActiveUser(userId);
-
-  if (input.channel.length !== 1 || input.channel[0] !== NotificationType.SMS) {
-    throw new AppError("Only the SMS channel is supported currently", 400);
-  }
 
   const event = await prisma.event.findUnique({
     where: {
@@ -107,7 +122,9 @@ export const sendNotification = async (userId: string, input: CreateNotification
   const renderedSubject = renderTemplate(event.subject, input.data);
   const renderedBody = renderTemplate(event.body, input.data);
 
-  const serializedData = JSON.parse(JSON.stringify(input.data)) as Prisma.InputJsonObject;
+  const serializedData = JSON.parse(
+    JSON.stringify(input.data),
+  ) as Prisma.InputJsonObject;
 
   const payload: Prisma.InputJsonValue = {
     data: serializedData,
@@ -132,7 +149,9 @@ export const sendNotification = async (userId: string, input: CreateNotification
       data: {
         notificationId: createdNotification.id,
         attemptNumber: 0,
-        response: { message: "Notification created and is waiting for delivery" },
+        response: {
+          message: "Notification created and is waiting for delivery",
+        },
       },
     });
 
@@ -140,26 +159,73 @@ export const sendNotification = async (userId: string, input: CreateNotification
   });
 
   try {
-    const job = await smsQueue.add(
-      "send-sms",
-      { notificationId: notification.id },
-      { jobId: notification.id },
+    const jobs = await Promise.all(
+      input.channel.map(async (channel) => {
+        if (channel === NotificationType.SMS) {
+          const job = await smsQueue.add(
+            "send-sms",
+            { notificationId: notification.id },
+            { jobId: `${notification.id}-sms` },
+          );
+
+          console.log(`SMS queue count: ${await smsQueue.count()}`);
+
+          return {
+            channel,
+            jobId: job.id,
+          };
+        }
+
+        if (channel === NotificationType.EMAIL) {
+          const job = await emailQueue.add(
+            "send-email",
+            { notificationId: notification.id },
+            { jobId: `${notification.id}-email` },
+          );
+
+          console.log(`Email queue count: ${await emailQueue.count()}`);
+
+          return {
+            channel,
+            jobId: job.id,
+          };
+        }
+
+        if (channel === NotificationType.WHATSAPP) {
+          const job = await whatsappQueue.add(
+            "send-whatsapp",
+            { notificationId: notification.id },
+            { jobId: `${notification.id}-whatsapp` },
+          );
+
+          console.log(`WhatsApp queue count: ${await whatsappQueue.count()}`);
+
+          return {
+            channel,
+            jobId: job.id,
+          };
+        }
+
+        throw new AppError(`Unsupported notification channel: ${channel}`, 400);
+      }),
     );
 
-    console.log(`smsQueue.count(): ${await smsQueue.count()}`);
+    console.log(`Notification ${notification.id} queued successfully`);
+    console.log("Jobs:", jobs);
 
-    return await prisma.notification.update({
-      where: { id: notification.id },
-      data: { jobId: job.id ?? notification.id },
-      select: notificationSelect,
-    });
+    return notification;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unable to queue SMS notification";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unable to queue notification";
 
     await prisma.notification.update({
       where: { id: notification.id },
-      data: { status: "FAILED", failedAt: new Date() },
+      data: {
+        status: "FAILED",
+        failedAt: new Date(),
+      },
     });
+
     await prisma.notificationLog.create({
       data: {
         notificationId: notification.id,
@@ -168,7 +234,7 @@ export const sendNotification = async (userId: string, input: CreateNotification
       },
     });
 
-    throw new AppError("Unable to queue SMS notification", 503);
+    throw new AppError("Unable to queue notification", 503);
   }
 };
 
@@ -184,15 +250,24 @@ export const listNotifications = async (userId: string) => {
   return notifications;
 };
 
-export const getNotification = async (userId: string, notificationId: string) => {
+export const getNotification = async (
+  userId: string,
+  notificationId: string,
+) => {
   await assertActiveUser(userId);
   return getOwnedNotificationOrThrow(userId, notificationId);
 };
 
-export const getNotificationStatus = async (userId: string, notificationId: string) => {
+export const getNotificationStatus = async (
+  userId: string,
+  notificationId: string,
+) => {
   await assertActiveUser(userId);
 
-  const notification = await getOwnedNotificationOrThrow(userId, notificationId);
+  const notification = await getOwnedNotificationOrThrow(
+    userId,
+    notificationId,
+  );
 
   return {
     id: notification.id,
@@ -201,4 +276,41 @@ export const getNotificationStatus = async (userId: string, notificationId: stri
     failedAt: notification.failedAt,
     logs: notification.logs,
   };
+};
+
+export const deleteNotification = async (
+  userId: string,
+  notificationId: string,
+) => {
+  await assertActiveUser(userId);
+  const notification = await getOwnedNotificationOrThrow(
+    userId,
+    notificationId,
+  );
+
+  await prisma.$transaction(async (transaction) => {
+    await transaction.notificationLog.deleteMany({
+      where: { notificationId: notification.id },
+    });
+    await transaction.notification.delete({ where: { id: notification.id } });
+  });
+};
+
+export const deleteAllNotifications = async (userId: string) => {
+  await assertActiveUser(userId);
+
+  await prisma.$transaction(async (transaction) => {
+    const notifications = await transaction.notification.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+    const notificationIds = notifications.map(({ id }) => id);
+
+    if (notificationIds.length > 0) {
+      await transaction.notificationLog.deleteMany({
+        where: { notificationId: { in: notificationIds } },
+      });
+    }
+    await transaction.notification.deleteMany({ where: { userId } });
+  });
 };

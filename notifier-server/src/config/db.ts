@@ -27,7 +27,6 @@
 
 // export default prisma;
 
-
 // src/config/db.ts
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";

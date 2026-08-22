@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Boxes, MoreHorizontal, Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/api/client";
+import { toast, useFeedback } from "@/components/feedback-provider";
 import { eventsApi } from "@/lib/api/events";
 import type { Event } from "@/lib/api/types";
 import {
@@ -16,6 +17,7 @@ export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { confirm } = useFeedback();
 
   const loadEvents = async () => {
     setIsLoading(true);
@@ -47,8 +49,9 @@ export default function EventsPage() {
       setEvents((current) =>
         current.map((item) => (item.id === updated.id ? updated : item)),
       );
+      toast.success(`Event ${updated.isActive ? "enabled" : "disabled"}`);
     } catch (actionError) {
-      setError(
+      toast.error(
         actionError instanceof ApiError
           ? actionError.message
           : "Unable to update the event.",
@@ -57,17 +60,19 @@ export default function EventsPage() {
   };
 
   const deleteEvent = async (event: Event) => {
-    if (
-      !window.confirm(
-        `Delete ${event.name}? Events with notifications cannot be deleted.`,
-      )
-    )
-      return;
+    const confirmed = await confirm({
+      title: `Delete ${event.name}?`,
+      description: "Events with notifications cannot be deleted.",
+      confirmLabel: "Delete event",
+      destructive: true,
+    });
+    if (!confirmed) return;
     try {
       await eventsApi.remove(event.id);
       setEvents((current) => current.filter((item) => item.id !== event.id));
+      toast.success("Event deleted");
     } catch (actionError) {
-      setError(
+      toast.error(
         actionError instanceof ApiError
           ? actionError.message
           : "Unable to delete the event.",
@@ -145,13 +150,14 @@ export default function EventsPage() {
                 <tr>
                   <th className="px-5 py-3 font-medium">Event name</th>
                   <th className="px-5 py-3 font-medium">Event key</th>
+                  <th className="px-5 py-3 font-medium">Channels</th>
                   <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Created</th>
                   <th className="px-5 py-3 font-medium" />
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {events.map((event) => (
+                {events.map((event, index) => (
                   <tr key={event.id} className="hover:bg-muted/30">
                     <td className="px-5 py-4">
                       <Link
@@ -166,6 +172,18 @@ export default function EventsPage() {
                     </td>
                     <td className="px-5 py-4 font-mono text-xs">
                       {event.eventKey}
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-wrap gap-1.5">
+                        {event.channel.map((channel) => (
+                          <span
+                            key={channel}
+                            className="rounded-full bg-accent px-2 py-1 text-[11px] font-semibold text-accent-foreground"
+                          >
+                            {channel}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                       <button
@@ -187,7 +205,9 @@ export default function EventsPage() {
                         <summary className="flex size-8 cursor-pointer list-none items-center justify-center rounded-md hover:bg-muted">
                           <MoreHorizontal size={17} />
                         </summary>
-                        <div className="absolute right-0 z-10 mt-1 w-32 rounded-md border bg-card p-1 shadow-lg">
+                        <div
+                          className={`absolute right-0 z-10 w-32 rounded-md border bg-card p-1 shadow-lg ${index >= events.length - 2 ? "bottom-9" : "mt-1"}`}
+                        >
                           <Link
                             href={`/events/${event.id}`}
                             className="block rounded px-3 py-2 text-xs hover:bg-muted"
@@ -216,6 +236,9 @@ export default function EventsPage() {
           </div>
         )}
       </div>
+      {!isLoading && events.length > 0 && (
+        <div className="h-24" aria-hidden="true" />
+      )}
     </NotifierShell>
   );
 }

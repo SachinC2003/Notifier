@@ -44,7 +44,11 @@ const getOwnedEventOrThrow = async (userId: string, eventId: string) => {
   return event;
 };
 
-const assertEventKeyAvailable = async (userId: string, eventKey: string, eventId?: string) => {
+const assertEventKeyAvailable = async (
+  userId: string,
+  eventKey: string,
+  eventId?: string,
+) => {
   const existingEvent = await prisma.event.findUnique({
     where: {
       userId_eventKey: {
@@ -96,7 +100,11 @@ export const getEvent = async (userId: string, eventId: string) => {
   return getOwnedEventOrThrow(userId, eventId);
 };
 
-export const updateEvent = async (userId: string, eventId: string, input: UpdateEventInput) => {
+export const updateEvent = async (
+  userId: string,
+  eventId: string,
+  input: UpdateEventInput,
+) => {
   await assertActiveUser(userId);
 
   if (Object.keys(input).length === 0) {

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "worker:sms": "tsx watch src/queue/sms.worker.ts",
+    "worker:whatsapp": "tsx watch src/queue/whatsapp.worker.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "generate": "prisma generate",

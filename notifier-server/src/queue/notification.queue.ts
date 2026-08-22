@@ -17,12 +17,17 @@ const defaultOptions = {
 };
 
 // Distinct queues for separate handling
-export const emailQueue = new Queue("EmailQueue", { 
-    connection: redisOptions, 
-    defaultJobOptions: defaultOptions 
+export const emailQueue = new Queue("EmailQueue", {
+  connection: redisOptions,
+  defaultJobOptions: defaultOptions,
 });
 
-export const smsQueue = new Queue<SmsJobData>("SMSQueue", { 
-    connection: redisOptions, 
-    defaultJobOptions: defaultOptions 
+export const smsQueue = new Queue<SmsJobData>("SMSQueue", {
+  connection: redisOptions,
+  defaultJobOptions: defaultOptions,
+});
+
+export const whatsappQueue = new Queue<SmsJobData>("WhatsAppQueue", {
+  connection: redisOptions,
+  defaultJobOptions: defaultOptions,
 });

@@ -5,6 +5,7 @@ import { ArrowLeft, Copy, Pencil, Power, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
+import { toast, useFeedback } from "@/components/feedback-provider";
 import { eventsApi } from "@/lib/api/events";
 import type { Event } from "@/lib/api/types";
 import {
@@ -23,6 +24,7 @@ export default function EventDetailsPage({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const { confirm } = useFeedback();
 
   useEffect(() => {
     let active = true;
@@ -51,6 +53,7 @@ export default function EventDetailsPage({
     setIsSaving(true);
     try {
       setEvent(await eventsApi.update(event.id, { isActive: !event.isActive }));
+      toast.success(`Event ${event.isActive ? "disabled" : "enabled"}`);
     } catch (actionError) {
       setError(
         actionError instanceof ApiError
@@ -63,10 +66,21 @@ export default function EventDetailsPage({
   };
 
   const remove = async () => {
-    if (!event || !window.confirm(`Delete ${event.name}?`)) return;
+    if (
+      !event ||
+      !(await confirm({
+        title: `Delete ${event.name}?`,
+        description:
+          "This event and its configuration will be permanently removed.",
+        confirmLabel: "Delete event",
+        destructive: true,
+      }))
+    )
+      return;
     setIsSaving(true);
     try {
       await eventsApi.remove(event.id);
+      toast.success("Event deleted");
       router.push("/events");
     } catch (actionError) {
       setError(
@@ -148,6 +162,21 @@ export default function EventDetailsPage({
                       >
                         <Copy size={14} />
                       </button>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">
+                      Available channels
+                    </dt>
+                    <dd className="mt-2 flex flex-wrap gap-2">
+                      {event.channel.map((channel) => (
+                        <span
+                          key={channel}
+                          className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-accent-foreground"
+                        >
+                          {channel}
+                        </span>
+                      ))}
                     </dd>
                   </div>
                   <div>

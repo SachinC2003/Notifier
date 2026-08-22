@@ -3,7 +3,7 @@ export interface CreateEventInput {
   name: string;
   subject: string;
   body: string;
-  channel: "EMAIL" | "SMS";
+  channel: ("EMAIL" | "SMS" | "WHATSAPP")[];
   description?: string;
 }
 
@@ -13,6 +13,6 @@ export interface UpdateEventInput {
   subject?: string;
   body?: string;
   description?: string | null;
-  channel?: "EMAIL" | "SMS";
+  channel?: ("EMAIL" | "SMS" | "WHATSAPP")[];
   isActive?: boolean;
 }
