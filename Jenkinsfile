@@ -13,7 +13,7 @@ pipeline {
 
         stage('Validate Docker Compose') {
             steps {
-                sh 'docker compose config -q'
+                sh 'docker compose -f compose.yml config -q'
                 echo 'Docker Compose configuration is valid'
             }
         }
