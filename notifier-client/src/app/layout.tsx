@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "Notifier | Notification infrastructure for developers",
   description:
     "Ship reliable SMS and email notifications with clear delivery visibility.",
-  icons: { icon: "/favicon.ico" },
+  icons: { icon: "/image.png" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
