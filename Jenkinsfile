@@ -39,7 +39,7 @@ pipeline {
                     '''
 
                     withCredentials([string(
-                        credentialsId: 'DATABASE_URL',
+                        credentialsId: 'notifier-database-url',
                         variable: 'DATABASE_URL'
                     )]) {
                         sh '''
@@ -59,7 +59,7 @@ pipeline {
                 }
             }
         }
-        
+
     }
 
     post {
