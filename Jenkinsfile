@@ -18,7 +18,8 @@ pipeline {
             }
         }
 
-        stage('Push to Docker Hub') {
+        
+        stage('Build and Push Docker Images') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-credentials',
@@ -26,13 +27,24 @@ pipeline {
                     passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
                     sh '''
+                        set -e
+
                         echo "$DOCKERHUB_TOKEN" | docker login \
                             --username "$DOCKERHUB_USER" \
                             --password-stdin
+
+                        docker build -t "$DOCKERHUB_USER/notifier-client:latest" ./notifier-client
+                        docker build -t "$DOCKERHUB_USER/notifier-server:latest" ./notifier-server
+
+                        docker push "$DOCKERHUB_USER/notifier-client:latest"
+                        docker push "$DOCKERHUB_USER/notifier-server:latest"
+
+                        docker logout
                     '''
                 }
             }
         }
+
     }
 
     post {
