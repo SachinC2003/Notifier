@@ -15,6 +15,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+ENV DATABASE_URL="postgresql://ci:ci@localhost:5432/notifier"
+
 RUN npm run generate
 RUN npm run build
 
