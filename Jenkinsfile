@@ -64,7 +64,7 @@ pipeline {
 
     post {
         success {
-            echo 'Notifier pipeline validation succeeded!'
+            echo 'Notifier pipeline validation succeeded -- test!'
         }
         failure {
             echo 'Pipeline failed. Check the Jenkins console output.'
