@@ -11,7 +11,8 @@ services:
     build: ./notifier-server
     container_name: notifier-server
     env_file:
-      - ./notifier-server/.env
+      - path: ./notifier-server/.env
+        required: false
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/notifier?schema=public
       REDIS_HOST: redis
