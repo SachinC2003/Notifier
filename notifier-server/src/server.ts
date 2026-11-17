@@ -6,7 +6,7 @@ import { requireJwtSecret } from "./utils/token.util";
 import "dotenv/config"; // Ensures environment variables are parsed immediately
 
 const app = express();
-const PORT = Number(process.env.PORT ?? 3000);
+const PORT = Number(process.env.PORT ?? 30001);
 
 // Inside your src/server.ts file, update the startServer function block:
 
@@ -28,7 +28,7 @@ const startServer = async () => {
   app.use((_req, res, next) => {
     res.header(
       "Access-Control-Allow-Origin",
-      process.env.FRONTEND_URL ?? "http://localhost:3001",
+      process.env.FRONTEND_URL ?? "http://localhost:30000",
     );
     res.header(
       "Access-Control-Allow-Headers",

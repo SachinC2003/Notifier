@@ -3,7 +3,7 @@ services:
     build: ./notifier-client
     container_name: notifier-client
     ports:
-      - "3001:3001"
+      - "30000:30000"
     networks:
       - notifier-network
 
@@ -18,7 +18,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
-      - "3000:3000"
+      - "30001:30001"
     depends_on:
       postgres:
         condition: service_healthy

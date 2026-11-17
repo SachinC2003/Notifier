@@ -84,7 +84,7 @@ export default function DashboardPage() {
       const notifier = new Notifier({
         apiKey,
         baseUrl:
-          process.env.NEXT_PUBLIC_NOTIFIER_API_URL ?? "http://localhost:3000",
+          process.env.NEXT_PUBLIC_NOTIFIER_API_URL ?? "http://localhost:30001",
       });
 
       const result = await notifier.notifications.send({

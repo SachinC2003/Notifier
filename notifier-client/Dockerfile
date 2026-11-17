@@ -25,7 +25,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3001
+ENV PORT=30000
 ENV HOST="0.0.0.0"
 
 # Run application as non-root user
@@ -52,6 +52,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 
-EXPOSE 3001
+EXPOSE 30000
 
 CMD ["node", "server.js"]

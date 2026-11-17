@@ -5,7 +5,7 @@ export class NotificationModule {
   private baseUrl: string;
 
   constructor(private config: SdkConfig) {
-    this.baseUrl = config.baseUrl || "http://localhost:3000";
+    this.baseUrl = config.baseUrl || "http://localhost:30001";
   }
 
   /**

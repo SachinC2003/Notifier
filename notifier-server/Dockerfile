@@ -26,7 +26,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=30001
 ENV HOST="0.0.0.0"
 
 RUN addgroup -S -g 1001 nodejs \
@@ -42,6 +42,6 @@ COPY --from=builder --chown=user:nodejs /app/prisma.config.ts ./prisma.config.ts
 
 USER user
 
-EXPOSE 3000
+EXPOSE 30001
 
 CMD ["npm", "start"]

@@ -6,8 +6,8 @@ This guide describes the current Notifier workspace. It documents the existing s
 
 ```text
 Notifier/
-|- notifier-client/  # Next.js dashboard (port 3001)
-|- notifier-server/  # Express API and BullMQ workers (port 3000)
+|- notifier-client/  # Next.js dashboard (port 30000)
+|- notifier-server/  # Express API and BullMQ workers (port 30001)
 `- notifier-sdk/     # TypeScript SDK package
 ```
 
@@ -99,7 +99,7 @@ Start the API:
 npm run dev
 ```
 
-The API listens on `http://localhost:3000` by default. The main server starts the SMS and WhatsApp workers. Dedicated worker commands are also available:
+The API listens on `http://localhost:30001` by default. The main server starts the SMS and WhatsApp workers. Dedicated worker commands are also available:
 
 ```bash
 npm run worker:sms
@@ -119,11 +119,11 @@ In a second terminal, configure and start `notifier-client`:
 
 ```powershell
 npm install
-Set-Content .env.local 'NEXT_PUBLIC_API_URL=http://localhost:3000'
+Set-Content .env.local 'NEXT_PUBLIC_API_URL=http://localhost:30001'
 npm run dev
 ```
 
-On macOS or Linux, create `.env.local` with the same variable using your editor or `printf`. The dashboard runs at `http://localhost:3001`.
+On macOS or Linux, create `.env.local` with the same variable using your editor or `printf`. The dashboard runs at `http://localhost:30000`.
 
 ## 6. Build the SDK
 
@@ -142,15 +142,15 @@ Its compiled files are written to `notifier-sdk/dist`.
 | --- | --- | --- | --- |
 | `DATABASE_URL` | Server | - | PostgreSQL connection string; required. |
 | `JWT_SECRET` | Server | - | JWT signing secret; required. |
-| `PORT` | Server | `3000` | API port. |
-| `FRONTEND_URL` | Server | `http://localhost:3001` | Allowed browser origin. |
+| `PORT` | Server | `30001` | API port. |
+| `FRONTEND_URL` | Server | `http://localhost:30000` | Allowed browser origin. |
 | `REDIS_HOST` | Server | `127.0.0.1` | Redis hostname. |
 | `REDIS_PORT` | Server | `6379` | Redis port. |
 | `TWILIO_ACCOUNT_SID` | SMS/WhatsApp worker | - | Twilio account identifier. |
 | `TWILIO_AUTH_TOKEN` | SMS/WhatsApp worker | - | Twilio authentication token. |
 | `TWILIO_PHONE_NUMBER` | SMS worker | - | Sender phone number. |
 | `TWILIO_WHATSAPP_FROM` | WhatsApp worker | - | Sender WhatsApp address. |
-| `NEXT_PUBLIC_API_URL` | Client | `http://localhost:3000` | API base URL used by the dashboard. |
+| `NEXT_PUBLIC_API_URL` | Client | `http://localhost:30001` | API base URL used by the dashboard. |
 
 ## Generated and local-only files
 
